@@ -1,0 +1,49 @@
+name: Run Postman Tests with Newman
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Перевіряємо репозиторій
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Встановлюємо Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      # Встановлюємо Newman і додатковий репортер
+      - name: Install Newman
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      # Створюємо папку для результатів тестів
+      - name: Make Directory for Results
+        run: mkdir -p testResults
+
+      # Запускаємо Postman колекцію через Newman
+      - name: Run Postman Collection
+        run: |
+          newman run garage.postman_collection.json \
+          -e garage_dev.postman_environment.json \
+          -r htmlextra,cli \
+          --reporter-htmlextra-export testResults/htmlreport.html
+
+      # Завантажуємо результати як артефакти
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: Test-Results
+          path: testResults
